@@ -4,7 +4,7 @@ description: An example project for flutter-desktop-embedding.
 version: 0.1.0
 
 environment:
-  sdk: '>=2.0.0 <3.0.0'
+  sdk: '>=2.2.0 <3.0.0'
   # The example interacts with build scripts on the Flutter side that are not
   # yet stable, so it requires a very recent version of Flutter.
   # This version will increase regularly as the build scripts change.
@@ -13,9 +13,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^0.1.0
-
+  tree_view: ^0.0.5
+  flutter_markdown: ^0.2.0
+  zefyr: ^0.8.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -38,4 +42,18 @@ flutter:
         - asset: fonts/Roboto/Roboto-Bold.ttf
           weight: 700
         - asset: fonts/Roboto/Roboto-Black.ttf
+          weight: 900
+    - family: NotoSerif
+      fonts:
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-ExtraLight.otf
+          weight: 100
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-Light.otf
+          weight: 300
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-Regular.otf
+          weight: 400
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-Medium.otf
+          weight: 500
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-Bold.otf
+          weight: 700
+        - asset: fonts/SourceHanSerifCN/SourceHanSerifCN-SemiBold.otf
           weight: 900

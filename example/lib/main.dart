@@ -12,10 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'directory.dart';
+import 'note.dart';
 
 void main() {
   // See https://github.com/flutter/flutter/wiki/Desktop-shells#target-platform-override
@@ -28,13 +34,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'WNotes',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         // See https://github.com/flutter/flutter/wiki/Desktop-shells#fonts
-        fontFamily: 'Roboto',
+        fontFamily: 'NotoSerif',
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'WNotes'),
+      localizationsDelegates: [
+        // ... app-specific localization delegate[s] here
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', 'US'), // English
+        const Locale('zh', 'CN'), // Hebrew
+        // ... other locales the app supports
+      ],
     );
   }
 }
@@ -49,12 +65,35 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  NoteChangedNotifier _noteChangedNotifier = NoteChangedNotifier(null);
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  Widget _showDirectory() {
+    return Expanded(
+      flex: 1,
+      child: new DirectoryRoute(
+          path: '/home/weiminji/workspace/notes',
+          shrinkWrap: false,
+          noteSelectedNotifier: _noteChangedNotifier),
+    );
+  }
+
+  Widget _showSpider() {
+    return Container(
+      color: Colors.green,
+      width: 5,
+      child: new GestureDetector(
+        onHorizontalDragUpdate: (DragUpdateDetails details) {
+          print(details.primaryDelta);
+        },
+      ),
+    );
+  }
+
+  Widget _showNote() {
+    return Expanded(
+      flex: 3,
+      child: new NoteRoute(noteChangedNotifier: _noteChangedNotifier),
+    );
   }
 
   @override
@@ -64,23 +103,13 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
+            _showDirectory(),
+            _showSpider(),
+            _showNote(),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
