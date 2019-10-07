@@ -17,11 +17,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'directory.dart';
 import 'note.dart';
+import 'save_file_dialog.dart';
+import 'setting_dialog.dart';
+import 'setting.dart';
 
 void main() {
   // See https://github.com/flutter/flutter/wiki/Desktop-shells#target-platform-override
@@ -30,6 +32,8 @@ void main() {
   runApp(new MyApp());
 }
 
+/*
+*/
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -65,15 +69,37 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  NoteChangedNotifier _noteChangedNotifier = NoteChangedNotifier(null);
+  final NoteChangedNotifier _noteShowNotifier = NoteChangedNotifier(null);
+  final NoteChangedNotifier _noteSelectedNotifier = NoteChangedNotifier(null);
+
+  @override
+  initState() {
+    super.initState();
+    _noteSelectedNotifier.addListener(_handleNoteSelected);
+    _noteShowNotifier.addListener(_handleNoteShowed);
+  }
+
+  void _handleNoteSelected() {
+    final selectedEntity = _noteSelectedNotifier.value;
+    if (selectedEntity is File) {
+      _noteShowNotifier.value = selectedEntity;
+    }
+  }
+
+  void _handleNoteShowed() {
+    final showedEntity = _noteShowNotifier.value;
+    _noteSelectedNotifier.value = showedEntity;
+  }
 
   Widget _showDirectory() {
+    final _settings = new Setting();
+    print('root folder ${_settings.rootPath}');
     return Expanded(
       flex: 1,
       child: new DirectoryRoute(
-          path: '/home/weiminji/workspace/notes',
+          path: _settings.rootPath,
           shrinkWrap: false,
-          noteSelectedNotifier: _noteChangedNotifier),
+          noteSelectedNotifier: _noteSelectedNotifier),
     );
   }
 
@@ -92,16 +118,101 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _showNote() {
     return Expanded(
       flex: 3,
-      child: new NoteRoute(noteChangedNotifier: _noteChangedNotifier),
+      child: new NoteRoute(noteChangedNotifier: _noteShowNotifier),
     );
   }
 
+  void _createNewNote() {
+    _noteShowNotifier.value = null;
+  }
+
+  void _createNewFolder() {
+    final folderPath = FileDialog.openSaveFileDialog('');
+    if (folderPath != null && folderPath.isNotEmpty) {
+      final newFolder = new Directory(folderPath);
+      newFolder.createSync(recursive: true);
+
+      print('create new folder $folderPath');
+      _noteSelectedNotifier.value = newFolder;
+      setState(() {});
+    }
+  }
+
+  void _reloadNewSetting() {
+    //_settings = new Setting();
+  }
+
+  void _createSettingDialog(BuildContext context) {
+    //导航到新路由
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return SettingWidget(
+        onApplyEvent: _reloadNewSetting,
+      );
+    }));
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    return AppBar(
+      bottom: PreferredSize(
+        preferredSize: Size(100, 10),
+        child: Row(
+          children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.note_add),
+              onPressed: _createNewNote,
+            ),
+            IconButton(
+              icon: Icon(Icons.folder),
+              onPressed: _createNewFolder,
+            ),
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: () => _createSettingDialog(context),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+/*
+  Widget _contextBuilder(
+      context, AsyncSnapshot<bool> snapshot) {
+    //在这里根据快照的状态，返回相应的widget
+    if (snapshot.connectionState == ConnectionState.active ||
+        snapshot.connectionState == ConnectionState.waiting) {
+      return new Center(
+        child: new CircularProgressIndicator(),
+      );
+    }
+    if (snapshot.connectionState == ConnectionState.done) {
+      if (snapshot.hasError) {
+        return new Center(
+          child: new Text(snapshot.error),
+        );
+      } else if (snapshot.hasData) {
+        return Row(
+          children: <Widget>[
+            _showDirectory(),
+            _showSpider(),
+            _showNote(),
+          ],
+        );
+      }
+    }
+  }
+
+  FutureBuilder<bool> _buildContext() {
+    return new FutureBuilder<bool>(
+      builder: _contextBuilder,
+      future: _settings.initFromFile(),
+    );
+  }
+*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: _buildAppBar(context),
       body: Center(
         child: Row(
           children: <Widget>[
@@ -110,6 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
             _showNote(),
           ],
         ),
+        //_buildContext(),
       ),
     );
   }
