@@ -23,7 +23,6 @@ class DirectoryRoute extends StatefulWidget {
 
 class _DirectoryRouteState extends State<DirectoryRoute> {
   final List<String> _expendDirectory = <String>[];
-
   @override
   initState() {
     super.initState();
@@ -32,7 +31,33 @@ class _DirectoryRouteState extends State<DirectoryRoute> {
 
   void _handleNoteChanged() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        final note = widget.noteSelectedNotifier.value;
+        if (note == null)
+          return;
+
+        final parent = widget.noteSelectedNotifier.value.parent;
+        final rootPath = widget.path;
+        if (parent.path.contains(rootPath)) {
+          final subDir = parent.path.substring(rootPath.length);
+          if (subDir.isEmpty) {
+            return;
+          }
+
+          final folders = subDir.split('/');
+          var firstFolder = folders[0];
+          if (firstFolder.isEmpty) {
+            firstFolder = '$rootPath/${folders[1]}';
+          } else {
+            firstFolder = '$rootPath/$firstFolder';
+          }
+
+          if (!_expendDirectory.contains(firstFolder)) {
+            print('add $firstFolder to _expendDirectory');
+            _expendDirectory.add(firstFolder);
+          }
+        }
+      });
     }
   }
 
@@ -80,33 +105,44 @@ class _DirectoryRouteState extends State<DirectoryRoute> {
     return entity is Directory && _expendDirectory.contains(entity.path);
   }
 
+  Color _getBackgroud(FileSystemEntity entity) {
+    //print('selected file $_selectedFile');
+    final showingFile = widget.noteSelectedNotifier.value;
+    if (showingFile != null && entity.path == showingFile.path) {
+      return Colors.grey;
+    }
+    return Colors.white;
+  }
+
   Widget _buildItem(FileSystemEntity entity, IconData icon,
       void onItemTab(FileSystemEntity entity)) {
-    return new InkWell(
-      child: new Row(
-        children: <Widget>[
-          new Padding(
-            padding: const EdgeInsets.fromLTRB(15.0, 0.0, 10.0, 0.0),
-            child: new Icon(
-              icon,
-              size: 15,
-            ),
-          ),
-          new Expanded(
-            child: new Text(
-              basename(entity.path),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: new TextStyle(
-                fontSize: 15.0,
+    return new Material(
+        color: _getBackgroud(entity),
+        child: new InkWell(
+          child: new Row(
+            children: <Widget>[
+              new Padding(
+                padding: const EdgeInsets.fromLTRB(15.0, 0.0, 10.0, 0.0),
+                child: new Icon(
+                  icon,
+                  size: 15,
+                ),
               ),
-            ),
+              new Expanded(
+                child: new Text(
+                  basename(entity.path),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: new TextStyle(
+                    fontSize: 15.0,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
 
-      onTap: () => onItemTab(entity), //点击
-    );
+          onTap: () => onItemTab(entity), //点击
+        ));
   }
 
   Widget _buildSubList(FileSystemEntity entity) {
@@ -153,8 +189,11 @@ class _DirectoryRouteState extends State<DirectoryRoute> {
     );
   }
 
-  Future<void> _onFileTab(FileSystemEntity entity) async {
+  void _onFileTab(FileSystemEntity entity) {
+    print('file tab ${entity.path}');
+    //_selectedFile = entity;
     widget.noteSelectedNotifier.value = entity;
+    setState(() {});
   }
 
   Widget _buildFileItem(FileSystemEntity entity) {

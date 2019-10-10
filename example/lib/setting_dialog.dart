@@ -15,12 +15,7 @@ class SettingWidget extends StatefulWidget {
 }
 
 class _SettingState extends State<SettingWidget> {
-  //final Setting _setting = new Setting();
   final TextEditingController _rootPathController = new TextEditingController();
-
-  //initState() {
-  //  super.initState();
-  //}
 
   void _setRootPathController(String rootFolder) {
     _rootPathController.value = _rootPathController.value.copyWith(
@@ -64,35 +59,6 @@ class _SettingState extends State<SettingWidget> {
       ),
     );
   }
-
-/*
-Widget _contextBuilder(
-      context, AsyncSnapshot<bool> snapshot) {
-    //在这里根据快照的状态，返回相应的widget
-    if (snapshot.connectionState == ConnectionState.active ||
-        snapshot.connectionState == ConnectionState.waiting) {
-      return new Center(
-        child: new CircularProgressIndicator(),
-      );
-    }
-    if (snapshot.connectionState == ConnectionState.done) {
-      if (snapshot.hasError) {
-        return new Center(
-          child: new Text(snapshot.error),
-        );
-      } else if (snapshot.hasData) {
-        return _buildSettingViews();
-      }
-    }
-  }
-
-  FutureBuilder<bool> _buildContext() {
-    return new FutureBuilder<bool>(
-      builder: _contextBuilder,
-      future: _setting.initFromFile(),
-    );
-  }
-  */
 
   Widget _buildRootFolderSetting() {
     final _setting = new Setting();

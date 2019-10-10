@@ -71,6 +71,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final NoteChangedNotifier _noteShowNotifier = NoteChangedNotifier(null);
   final NoteChangedNotifier _noteSelectedNotifier = NoteChangedNotifier(null);
+  bool _menuOnShow = true;
 
   @override
   initState() {
@@ -92,15 +93,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _showDirectory() {
-    final _settings = new Setting();
-    print('root folder ${_settings.rootPath}');
-    return Expanded(
-      flex: 1,
-      child: new DirectoryRoute(
-          path: _settings.rootPath,
-          shrinkWrap: false,
-          noteSelectedNotifier: _noteSelectedNotifier),
-    );
+    if (_menuOnShow) {
+      final _settings = new Setting();
+      print('root folder ${_settings.rootPath}');
+      return Expanded(
+        flex: 1,
+        child: new DirectoryRoute(
+            path: _settings.rootPath,
+            shrinkWrap: false,
+            noteSelectedNotifier: _noteSelectedNotifier),
+      );
+    } else {
+      return new Padding(
+        padding: EdgeInsets.all(0),
+      );
+    }
   }
 
   Widget _showSpider() {
@@ -127,7 +134,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _createNewFolder() {
-    final folderPath = FileDialog.openSaveFileDialog('');
+    final setting = new Setting();
+    final folderPath = FileDialog.openSaveFileDialog(setting.rootPath);
     if (folderPath != null && folderPath.isNotEmpty) {
       final newFolder = new Directory(folderPath);
       newFolder.createSync(recursive: true);
@@ -143,7 +151,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _createSettingDialog(BuildContext context) {
-    //导航到新路由
     Navigator.push(context, MaterialPageRoute(builder: (context) {
       return SettingWidget(
         onApplyEvent: _reloadNewSetting,
@@ -151,64 +158,40 @@ class _MyHomePageState extends State<MyHomePage> {
     }));
   }
 
+  void _showMenu() {
+    setState(() {
+      _menuOnShow = !_menuOnShow;
+    });
+  }
+
+  void _refreshNotes() {
+
+  }
+
   Widget _buildAppBar(BuildContext context) {
     return AppBar(
-      bottom: PreferredSize(
-        preferredSize: Size(100, 10),
-        child: Row(
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.note_add),
-              onPressed: _createNewNote,
-            ),
-            IconButton(
-              icon: Icon(Icons.folder),
-              onPressed: _createNewFolder,
-            ),
-            IconButton(
-              icon: Icon(Icons.settings),
-              onPressed: () => _createSettingDialog(context),
-            )
-          ],
+      leading: IconButton(icon: Icon(Icons.menu), onPressed: _showMenu),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.note_add),
+          onPressed: _createNewNote,
         ),
-      ),
+        IconButton(
+          icon: Icon(Icons.folder),
+          onPressed: _createNewFolder,
+        ),
+        IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: _refreshNotes,
+        ),
+        IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () => _createSettingDialog(context),
+        )
+      ],
     );
   }
 
-/*
-  Widget _contextBuilder(
-      context, AsyncSnapshot<bool> snapshot) {
-    //在这里根据快照的状态，返回相应的widget
-    if (snapshot.connectionState == ConnectionState.active ||
-        snapshot.connectionState == ConnectionState.waiting) {
-      return new Center(
-        child: new CircularProgressIndicator(),
-      );
-    }
-    if (snapshot.connectionState == ConnectionState.done) {
-      if (snapshot.hasError) {
-        return new Center(
-          child: new Text(snapshot.error),
-        );
-      } else if (snapshot.hasData) {
-        return Row(
-          children: <Widget>[
-            _showDirectory(),
-            _showSpider(),
-            _showNote(),
-          ],
-        );
-      }
-    }
-  }
-
-  FutureBuilder<bool> _buildContext() {
-    return new FutureBuilder<bool>(
-      builder: _contextBuilder,
-      future: _settings.initFromFile(),
-    );
-  }
-*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,7 +204,6 @@ class _MyHomePageState extends State<MyHomePage> {
             _showNote(),
           ],
         ),
-        //_buildContext(),
       ),
     );
   }

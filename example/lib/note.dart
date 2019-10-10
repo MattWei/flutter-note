@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'note_viewer.dart';
 import 'save_file_dialog.dart';
+import 'setting.dart';
 
 class NoteChangedNotifier extends ValueNotifier<FileSystemEntity> {
   NoteChangedNotifier(value) : super(value);
@@ -119,11 +120,14 @@ class _NoteRouteState extends State<NoteRoute> {
   }
 
   void _createNewNote() {
-    var title = _getTitleFromTitleBar();
-    if (title.isEmpty) return;
+    final title = _getTitleFromTitleBar();
+    if (title.isEmpty) {
+      return;
+    }
 
-    title += '.md';
-    final filePath = FileDialog.openSaveFileDialog(title);
+    final setting = new Setting();
+    final origFilePath = '${setting.rootPath}/$title.md';
+    final filePath = FileDialog.openSaveFileDialog(origFilePath);
     if (filePath != null && filePath.isNotEmpty) {
       final newFile = new File(filePath);
       newFile.createSync(recursive: true);
