@@ -3,17 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import '../note/note.dart';
+
 class NoteViewerRoute extends StatefulWidget {
   NoteViewerRoute({Key key, @required this.noteEntity}) : super(key: key);
 
-  final FileSystemEntity noteEntity;
+  final Note noteEntity;
 
   @override
   _NoteViewerRouteState createState() => _NoteViewerRouteState();
 }
 
 class _NoteViewerRouteState extends State<NoteViewerRoute> {
-
   @override
   Widget build(BuildContext context) {
     final _entity = widget.noteEntity;
@@ -21,7 +22,7 @@ class _NoteViewerRouteState extends State<NoteViewerRoute> {
 
     if (_entity != null) {
       try {
-        final noteFile = new File('${_entity.path}');
+        final noteFile = new File('${_entity.entity.path}');
         _note = noteFile.readAsStringSync();
       } on FileSystemException {
         _note = '';

@@ -19,11 +19,14 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'directory.dart';
-import 'note.dart';
-import 'save_file_dialog.dart';
-import 'setting_dialog.dart';
+import 'editor/note.dart';
+import 'menu/menu.dart';
+import 'note/note.dart';
+import 'note/note_entity.dart';
+import 'note/notebook.dart';
+
 import 'setting.dart';
+import 'setting_dialog.dart';
 
 void main() {
   // See https://github.com/flutter/flutter/wiki/Desktop-shells#target-platform-override
@@ -69,38 +72,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final NoteChangedNotifier _noteShowNotifier = NoteChangedNotifier(null);
-  final NoteChangedNotifier _noteSelectedNotifier = NoteChangedNotifier(null);
+  Notebook _rootNotebook;
+  final NoteSelectedNotifier _noteShowNotifier = NoteSelectedNotifier(null);
+  final NoteSelectedNotifier _noteSelectedNotifier = NoteSelectedNotifier(null);
   bool _menuOnShow = true;
 
   @override
   initState() {
     super.initState();
+    
+    final _settings = new Setting();
+    _rootNotebook = new Notebook(Directory(_settings.rootPath), true, null);
+
     _noteSelectedNotifier.addListener(_handleNoteSelected);
-    _noteShowNotifier.addListener(_handleNoteShowed);
   }
 
   void _handleNoteSelected() {
     final selectedEntity = _noteSelectedNotifier.value;
-    if (selectedEntity is File) {
+    if (selectedEntity is Note) {
       _noteShowNotifier.value = selectedEntity;
     }
   }
 
-  void _handleNoteShowed() {
-    final showedEntity = _noteShowNotifier.value;
-    _noteSelectedNotifier.value = showedEntity;
-  }
-
-  Widget _showDirectory() {
+  Widget _getMenu() {
     if (_menuOnShow) {
-      final _settings = new Setting();
-      print('root folder ${_settings.rootPath}');
       return Expanded(
         flex: 1,
-        child: new DirectoryRoute(
-            path: _settings.rootPath,
-            shrinkWrap: false,
+        child: new Menu(
+            rootNotebook: _rootNotebook,
             noteSelectedNotifier: _noteSelectedNotifier),
       );
     } else {
@@ -127,23 +126,6 @@ class _MyHomePageState extends State<MyHomePage> {
       flex: 3,
       child: new NoteRoute(noteChangedNotifier: _noteShowNotifier),
     );
-  }
-
-  void _createNewNote() {
-    _noteShowNotifier.value = null;
-  }
-
-  void _createNewFolder() {
-    final setting = new Setting();
-    final folderPath = FileDialog.openSaveFileDialog(setting.rootPath);
-    if (folderPath != null && folderPath.isNotEmpty) {
-      final newFolder = new Directory(folderPath);
-      newFolder.createSync(recursive: true);
-
-      print('create new folder $folderPath');
-      _noteSelectedNotifier.value = newFolder;
-      setState(() {});
-    }
   }
 
   void _reloadNewSetting() {
@@ -173,14 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
       leading: IconButton(icon: Icon(Icons.menu), onPressed: _showMenu),
       actions: <Widget>[
         IconButton(
-          icon: Icon(Icons.note_add),
-          onPressed: _createNewNote,
-        ),
-        IconButton(
-          icon: Icon(Icons.folder),
-          onPressed: _createNewFolder,
-        ),
-        IconButton(
           icon: Icon(Icons.refresh),
           onPressed: _refreshNotes,
         ),
@@ -199,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Row(
           children: <Widget>[
-            _showDirectory(),
+            _getMenu(),
             _showSpider(),
             _showNote(),
           ],

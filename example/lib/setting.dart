@@ -1,8 +1,6 @@
 import 'dart:convert' show json;
 import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
-
 class Setting {
   static const _settingFile = 'assets/settings.json';
   String rootPath;

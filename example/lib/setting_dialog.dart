@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'setting.dart';
-import 'save_file_dialog.dart';
+//import 'save_file_dialog.dart';
 
 class SettingWidget extends StatefulWidget {
   Function onApplyEvent;
@@ -38,12 +38,14 @@ class _SettingState extends State<SettingWidget> {
   }
 
   void _changeRootFolder() {
+    /*
     final _setting = new Setting();
     final filePath = FileDialog.openSelectFolderDialog(_setting.rootPath);
     if (filePath != null && filePath.isNotEmpty) {
       print('select $filePath to root path');
       _setRootPathController(filePath);
     }
+    */
   }
 
   Widget _buildSettingViews() {
