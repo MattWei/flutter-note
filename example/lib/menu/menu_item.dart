@@ -9,22 +9,31 @@ class MenuItem extends StatefulWidget {
     @required this.note,
     Key key,
     this.onTab,
+    this.dragTargetNotifier
   }) : super(key: key);
 
   final NoteEntity note;
   final NoteSelectedNotifier noteSelectedNotifier;
   final onTab;
   final getIcon;
+  final DragTargetNotifier dragTargetNotifier;
   @override
   _MenuItemState createState() => _MenuItemState();
 }
 
 class _MenuItemState extends State<MenuItem> {
+  bool _isOnDragTarget = false;
+
   @override
   initState() {
     super.initState();
     widget.note.statusChangedNotifier.addListener(_handleNoteStatusChanged);
     widget.noteSelectedNotifier.addListener(_handleSelectedNoteChanged);
+
+    if (widget.dragTargetNotifier != null) {
+      widget.dragTargetNotifier.addListener(_handleDragTarget);
+      _isOnDragTarget = widget.dragTargetNotifier.value;
+    }
   }
 
   bool _updateSelectedStatus() {
@@ -56,8 +65,19 @@ class _MenuItemState extends State<MenuItem> {
   void _handleSelectedNoteChanged() {
     if (mounted) {
       if (_updateSelectedStatus()) {
-        setState(() {});
+        setState(() {
+
+        });
       }
+    }
+  }
+
+  void _handleDragTarget() {
+    if (mounted) {
+      setState(() {
+        _isOnDragTarget = widget.dragTargetNotifier.value;
+      });
+
     }
   }
 
@@ -66,7 +86,11 @@ class _MenuItemState extends State<MenuItem> {
       return Colors.grey;
     }
 
-    return Colors.white;
+    if (_isOnDragTarget) {
+      return Colors.blue;
+    }
+
+    return Theme.of(context).accentColor;
   }
 
   void _onTab(NoteEntity note) {
@@ -80,7 +104,7 @@ class _MenuItemState extends State<MenuItem> {
 
   Widget _buildItem() {
     final note = widget.note;
-    return new Material(
+    return Material(
         color: _getBackgroud(note),
         child: InkWell(
           child: Row(

@@ -1,19 +1,56 @@
 import 'dart:io';
+
 import 'note.dart';
 import 'note_entity.dart';
 
 class Notebook extends NoteEntity {
-  Notebook(FileSystemEntity entity, this.isRoot, NoteEntity parent)
+  Notebook(FileSystemEntity entity, this.isRoot, Notebook parent)
       : super(entity, parent) {
     if (isRoot) {
       expanded = true;
+    }
+    if (parent != null) {
+      parent.dragTargetNotifier.addListener(_onParentIsDragTarget);
     }
   }
 
   bool isRoot = false;
   bool expanded = false;
+  DragTargetNotifier dragTargetNotifier = new DragTargetNotifier();
 
   List<NoteEntity> subNotes = [];
+
+  bool _isOnAccepting = false;
+
+  void _onParentIsDragTarget() {
+    final Notebook parentNotebook = parent;
+    final parentOnTarget = parentNotebook.dragTargetNotifier.value;
+    final isOnTarget = dragTargetNotifier.value;
+    if (parentOnTarget == isOnTarget) {
+      return;
+    }
+
+    if (parentOnTarget && !isOnTarget) {
+      dragTargetNotifier.value = true;
+    }
+
+    if (!parentOnTarget && isOnTarget) {
+      if (!_isOnAccepting) {
+        dragTargetNotifier.value = false;
+      }
+    }
+  }
+
+  set onDragItems(bool value) {
+    final isOnTarget = dragTargetNotifier.value;
+    if (isOnTarget != value) {
+      dragTargetNotifier.value = value;
+    }
+  }
+
+  bool get onDragItems {
+    return dragTargetNotifier.value;
+  }
 
   @override
   void rename(String newFileName) {
@@ -52,7 +89,7 @@ class Notebook extends NoteEntity {
     print('create new folder $newFolderPath');
     final notebook = new Notebook(newFolder, false, this);
     subNotes.add(notebook);
-    statusChangedNotifier.notifyAll();
+    statusChangedNotifier.value = NoteStatusType.ADD_ITEM;
 
     return 'OK';
   }
@@ -67,7 +104,7 @@ class Notebook extends NoteEntity {
     newNoteFile.createSync(recursive: true);
     final newNote = Note(newNoteFile, this);
     subNotes.add(newNote);
-    statusChangedNotifier.notifyAll();
+    statusChangedNotifier.value = NoteStatusType.ADD_ITEM;
 
     return 'OK';
   }
@@ -109,5 +146,12 @@ class Notebook extends NoteEntity {
   void onSelect() {
     expanded = !expanded;
     onSelected = true;
+  }
+
+  @override
+  void deleteSubitem(NoteEntity subEntity) {
+    if (subNotes.contains(subEntity)) {
+      subNotes.remove(subEntity);
+    }
   }
 }

@@ -3,12 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 
-class NoteStatusChangedNotifier extends ValueNotifier<Null> {
-  NoteStatusChangedNotifier() : super(null);
+enum NoteStatusType {RESET, EXTEND, RENAME, ADD_ITEM, REMOVE_ITEM, BEFORE_REMOVE_ITEM}
 
-  void notifyAll() {
-    notifyListeners();
-  }
+class NoteStatusChangedNotifier extends ValueNotifier<NoteStatusType> {
+  NoteStatusChangedNotifier() : super(NoteStatusType.RESET);
 }
 
 class NoteEntity {
@@ -50,10 +48,28 @@ class NoteEntity {
     entity = entity.renameSync(newFilePath);
     _setName();
 
-    statusChangedNotifier.notifyAll();
+    statusChangedNotifier.value = NoteStatusType.RENAME;
+  }
+
+  void deleteSubitem(NoteEntity subEntity) {
+    
+  }
+
+  void move(NoteEntity newParen) {
+    parent.statusChangedNotifier.value = NoteStatusType.BEFORE_REMOVE_ITEM;
+    parent.deleteSubitem(this);
+    final file = basename(entity.path);
+    final newFilePath = '${newParen.entity.path}/$file';
+    entity = entity.renameSync(newFilePath);
+    parent.statusChangedNotifier.value = NoteStatusType.REMOVE_ITEM;
+    parent = newParen;
   }
 }
 
 class NoteSelectedNotifier extends ValueNotifier<NoteEntity> {
   NoteSelectedNotifier(value) : super(value);
+}
+
+class DragTargetNotifier extends ValueNotifier<bool> {
+  DragTargetNotifier() : super(false);
 }

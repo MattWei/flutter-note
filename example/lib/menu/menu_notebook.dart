@@ -32,7 +32,12 @@ class _MenuNoteBookState extends State<MenuNoteBook> {
 
   void _handleNotebookStatusChanged() {
     if (mounted) {
-      setState(() {});
+      final type = widget.notebook.statusChangedNotifier.value;
+      if (type == NoteStatusType.ADD_ITEM ||
+          type == NoteStatusType.REMOVE_ITEM) {
+        setState(() {
+        });
+      }
     }
   }
 
@@ -72,15 +77,20 @@ class _MenuNoteBookState extends State<MenuNoteBook> {
   Widget _buildListView(BuildContext context, List<FileSystemEntity> list) {
     final notebook = widget.notebook;
     notebook.updateSubNotes(list);
-
     return new ListView.builder(
       shrinkWrap: true,
       itemBuilder: (context, index) {
         final entity = notebook.subNotes[index];
         if (entity is Note) {
           return MenuNote(
-              note: entity, noteSelectedNotifier: widget.noteSelectedNotifier);
+              note: entity,
+              noteSelectedNotifier: widget.noteSelectedNotifier,
+              dragTargetNotifier: notebook.dragTargetNotifier);
         } else {
+          if (notebook.dragTargetNotifier.value) {
+            final Notebook childNotebook = entity;
+            childNotebook.dragTargetNotifier.value = true;
+          }
           return MenuNoteBook(
               notebook: entity,
               noteSelectedNotifier: widget.noteSelectedNotifier);
@@ -98,12 +108,11 @@ class _MenuNoteBookState extends State<MenuNoteBook> {
   Widget _buildNotebookList(Notebook notebook) {
     if (notebook != null && notebook.expanded) {
       return Container(
-        color: Colors.blue,
         padding: const EdgeInsets.fromLTRB(10.0, 0.0, 0.0, 0.0),
         child: FutureBuilder<List<FileSystemEntity>>(
-            builder: _notebookBuilder,
-            future: _listSubnotes(notebook.entity.path),
-          ),
+          builder: _notebookBuilder,
+          future: _listSubnotes(notebook.entity.path),
+        ),
       );
     } else {
       return Container();
@@ -127,31 +136,57 @@ class _MenuNoteBookState extends State<MenuNoteBook> {
         note: notebook,
         onTab: _onTab,
         getIcon: _getDirectoryItemIcon,
-        noteSelectedNotifier: widget.noteSelectedNotifier);
+        noteSelectedNotifier: widget.noteSelectedNotifier,
+        dragTargetNotifier: notebook.dragTargetNotifier);
+  }
+
+  Color _getAccentColor() {
+    return Colors.white;
   }
 
   Widget _createNotebookView(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(
-            color: Colors.amberAccent,
-            width: double.maxFinite,
-            child: _buildNotebookTitle(widget.notebook),
-          ),
-          Container(
-            color: Colors.amberAccent,
-            width: double.maxFinite,
-            child: _buildNotebookList(widget.notebook),
-          )
-        ],
+    return Theme(
+      data: ThemeData(
+        accentColor: _getAccentColor(),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            Container(
+              width: double.maxFinite,
+              child: _buildNotebookTitle(widget.notebook),
+            ),
+            Container(
+              width: double.maxFinite,
+              child: _buildNotebookList(widget.notebook),
+            )
+          ],
+        ),
       ),
     );
   }
 
+  bool _checkMovePath(NoteEntity source) {
+    final notebook = widget.notebook;
+    final tPath = notebook.entity.path;
+    final sParentPath = source.entity.parent.path;
+    //直接子项，不移动
+    if (sParentPath == tPath) {
+      return false;
+    }
+
+    //父目录不能移动到子目录
+    final sPath = source.entity.path;
+    if (tPath.contains(sPath)) {
+      return false;
+    }
+
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final notebookView = _createNotebookView(context);
+    final notebookMenu = _createNotebookView(context);
     Timer expandTimer;
     return DragTarget<NoteEntity>(
       // 用来接收数据的 Widget
@@ -160,40 +195,40 @@ class _MenuNoteBookState extends State<MenuNoteBook> {
         List<dynamic> accepted,
         List<dynamic> rejected,
       ) {
-        return notebookView;
+        return notebookMenu;
       },
       // 用来接收数据
       onAccept: (data) {
         expandTimer?.cancel();
-        print('mv ${data.entity.path} to ${widget.notebook.entity.path}');
+        widget.notebook.onDragItems = false;
+
+        if (!_checkMovePath(data)) {
+          return true;
+        }
+        data.move(widget.notebook);
+        setState(() {});
       },
       onWillAccept: (data) {
-        final notebook = widget.notebook;
-        final itemPath = data.entity.path;
-        final currentPath = notebook.entity.path;
-        if (currentPath.contains(itemPath)) {
-          print(
-              'not Accept ${data.entity.path} to ${widget.notebook.entity.path}');
-          return false;
+        if (!_checkMovePath(data)) {
+          return true;
         }
 
+        final notebook = widget.notebook;
+        notebook.onDragItems = true;
         if (!notebook.expanded) {
-          expandTimer = Timer(Duration(seconds: 2), () {
+          expandTimer = Timer(Duration(seconds: 1), () {
             setState(() {
               notebook.expanded = true;
             });
+            //
           });
         }
 
-        print(
-            'onWillAccept ${data.entity.path} to ${widget.notebook.entity.path}');
         return true;
       },
       onLeave: (data) {
         expandTimer?.cancel();
-
-        print(
-            'onWillAccept ${data.entity.path} to ${widget.notebook.entity.path}');
+        widget.notebook.onDragItems = false;
       },
     );
   }

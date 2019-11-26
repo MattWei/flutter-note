@@ -16,8 +16,8 @@ class _NameInputDialog {
       barrierDismissible:
           false, // dialog is dismissible with a tap on the barrier
       builder: (context) {
-        final textEditingController =
-            TextEditingController.fromValue(TextEditingValue(
+        final textEditingController = TextEditingController.fromValue(
+            TextEditingValue(
                 text: '$defaultValue', //判断keyword是否为空
                 // 保持光标在最后
 
@@ -90,7 +90,9 @@ class _MenuToolsBarState extends State<MenuToolsBar> {
   }
 
   void _handleSelectedNoteChanged() {
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Widget _createButton(Icon icon, onPressed) {

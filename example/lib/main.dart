@@ -80,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   initState() {
     super.initState();
-    
+
     final _settings = new Setting();
     _rootNotebook = new Notebook(Directory(_settings.rootPath), true, null);
 
@@ -96,11 +96,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _getMenu() {
     if (_menuOnShow) {
+      /*
       return Expanded(
         flex: 1,
         child: new Menu(
             rootNotebook: _rootNotebook,
             noteSelectedNotifier: _noteSelectedNotifier),
+      );
+      */
+      return Drawer(
+        elevation: 20,
+        child: MediaQuery.removePadding(
+          context: context,
+          //移除抽屉菜单顶部默认留白
+          removeTop: true,
+          child: Menu(
+              rootNotebook: _rootNotebook,
+              noteSelectedNotifier: _noteSelectedNotifier),
+        ),
       );
     } else {
       return new Padding(
@@ -146,9 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _refreshNotes() {
-
-  }
+  void _refreshNotes() {}
 
   Widget _buildAppBar(BuildContext context) {
     return AppBar(
@@ -170,6 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
+      //drawer: _getMenu(),
       body: Center(
         child: Row(
           children: <Widget>[
